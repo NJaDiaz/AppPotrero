@@ -11,8 +11,8 @@ import { CATEGORIES } from '@/types'
 import type { Business, Category } from '@/types'
 
 export default function BuscarPage() {
-  const searchParams = useSearchParams()
-  const [query, setQuery] = useState(searchParams.get('q') || '')
+ const searchParams = useSearchParams()
+const [query, setQuery] = useState('')
   const [results, setResults] = useState<Business[]>([])
   const [loading, setLoading] = useState(false)
   const [category, setCategory] = useState<Category | 'all'>('all')
