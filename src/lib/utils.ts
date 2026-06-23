@@ -20,31 +20,98 @@ export function getWhatsAppUrl(phone: string, message?: string): string {
 
 export function isBusinessOpen(schedule: BusinessSchedule | null): boolean {
   if (!schedule) return false
-  const now  = new Date()
-  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'] as const
+
+  const now = new Date()
+
+  const days = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+  ] as const
+
   const today = days[now.getDay()]
   const daySchedule = schedule[today]
-  if (!daySchedule || daySchedule.closed) return false
 
-  const [openH, openM]   = daySchedule.open.split(':').map(Number)
-  const [closeH, closeM] = daySchedule.close.split(':').map(Number)
-  const cur   = now.getHours() * 60 + now.getMinutes()
-  const open  = openH * 60 + openM
-  const close = closeH * 60 + closeM
+  if (!daySchedule || daySchedule.closed || !daySchedule.shifts?.length) {
+    return false
+  }
 
-  if (close < open) return cur >= open || cur <= close
-  return cur >= open && cur <= close
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  return daySchedule.shifts.some((shift) => {
+    const [openH, openM] = shift.open.split(':').map(Number)
+    const [closeH, closeM] = shift.close.split(':').map(Number)
+
+    const open = openH * 60 + openM
+    const close = closeH * 60 + closeM
+
+    // horario que cruza medianoche
+    if (close < open) {
+      return currentMinutes >= open || currentMinutes <= close
+    }
+
+    return currentMinutes >= open && currentMinutes <= close
+  })
 }
+
+export function formatDaySchedule(
+  schedule: BusinessSchedule | null,
+  day: keyof BusinessSchedule
+): string {
+  const daySchedule = schedule?.[day]
+
+  if (!daySchedule || daySchedule.closed) {
+    return 'Cerrado'
+  }
+
+  return daySchedule.shifts
+    .map((shift) => `${shift.open} - ${shift.close}`)
+    .join(' | ')
+}
+
 
 export function getScheduleText(schedule: BusinessSchedule | null): string {
   if (!schedule) return 'Horario no disponible'
-  const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as const
-  const openDays = days.filter(d => schedule[d] && !schedule[d]!.closed)
-  if (openDays.length === 0) return 'Cerrado'
-  if (openDays.length === 7) {
-    const s = schedule.monday!
-    return `Lun a Dom ${s.open} - ${s.close} hs`
+
+  const days = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ] as const
+
+  const openDays = days.filter(
+    (d) =>
+      schedule[d] &&
+      !schedule[d]!.closed &&
+      schedule[d]!.shifts?.length > 0
+  )
+
+  if (openDays.length === 0) {
+    return 'Cerrado'
   }
+
+  if (openDays.length === 7) {
+    const monday = schedule.monday
+
+    if (
+      monday &&
+      !monday.closed &&
+      monday.shifts?.length
+    ) {
+      return `Lun a Dom ${monday.shifts
+        .map((s) => `${s.open}-${s.close}`)
+        .join(' | ')} hs`
+    }
+  }
+
   return 'Ver horario completo'
 }
 

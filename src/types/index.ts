@@ -55,20 +55,24 @@ export interface Business {
   updated_at: string
 }
 
-export interface BusinessSchedule {
-  monday:    DaySchedule | null
-  tuesday:   DaySchedule | null
-  wednesday: DaySchedule | null
-  thursday:  DaySchedule | null
-  friday:    DaySchedule | null
-  saturday:  DaySchedule | null
-  sunday:    DaySchedule | null
+export interface Shift {
+  open: string
+  close: string
 }
 
 export interface DaySchedule {
-  open: string
-  close: string
   closed: boolean
+  shifts: Shift[]
+}
+
+export interface BusinessSchedule {
+  monday: DaySchedule | null
+  tuesday: DaySchedule | null
+  wednesday: DaySchedule | null
+  thursday: DaySchedule | null
+  friday: DaySchedule | null
+  saturday: DaySchedule | null
+  sunday: DaySchedule | null
 }
 
 export interface BusinessMedia {

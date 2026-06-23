@@ -39,6 +39,8 @@ export default function BusinessPageClient({ business, media }: Props) {
     window.open(getDirectionsUrl(business.latitude, business.longitude, business.name), '_blank')
   }
 
+  console.log('schedule', business.schedule)
+
   const handleShare = async () => {
     if (navigator.share) {
       await navigator.share({ title: business.name, text: business.short_description || business.name, url: window.location.href })
@@ -201,22 +203,34 @@ export default function BusinessPageClient({ business, media }: Props) {
                 </h3>
                 <div className="space-y-2">
                   {DAY_ORDER.map(day => {
-                    const s = (business.schedule as any)?.[day]
-                    if (!s) return null
-                    return (
-                      <div key={day} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 font-medium">{DAY_LABELS[day]}</span>
-                        {s.closed ? (
-                          <span className="text-red-500 font-semibold">Cerrado</span>
-                        ) : (
-                          <span className="text-gray-800 font-semibold">{s.open} - {s.close} hs</span>
-                        )}
-                      </div>
-                    )
-                  })}
+  const s = (business.schedule as any)?.[day]
+  if (!s) return null
+
+  return (
+    <div key={day} className="flex items-center justify-between text-sm">
+      <span className="text-gray-600 font-medium">
+        {DAY_LABELS[day]}
+      </span>
+
+  {s.closed ? (
+  <span className="text-red-500 font-semibold">
+    Cerrado
+  </span>
+) : (
+  <span className="text-gray-800 font-semibold">
+    {s.shifts?.map((shift: any) =>
+      `${shift.open} - ${shift.close}`
+    ).join(' | ')} hs
+  </span>
+)}
+    </div>
+  )
+})}
                 </div>
               </div>
             )}
+
+            
 
             {business.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
