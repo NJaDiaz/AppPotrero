@@ -26,7 +26,7 @@ export default function BusinessCard({ business, variant = 'default', className 
   if (variant === 'horizontal') {
     return (
       <Link href={`/comercio/${business.slug}`}>
-        <div className={cn('flex gap-3 bg-white rounded-2xl p-3 shadow-card card-hover', className)}>
+        <div className={cn('flex gap-3 my-2 bg-white rounded-2xl p-3 shadow-card card-hover', className)}>
           <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
             {business.cover_url ? (
               <Image src={business.cover_url} alt={business.name} fill className="object-cover" />

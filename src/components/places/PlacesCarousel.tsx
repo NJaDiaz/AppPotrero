@@ -11,7 +11,7 @@ export default function PlacesCarousel({ places }: Props) {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 space-y-10">
         <div>
           <h2 className="font-display font-bold text-gray-900 text-base">Lugares para visitar</h2>
           <p className="text-xs text-gray-400">Los rincones más lindos de Potrero</p>

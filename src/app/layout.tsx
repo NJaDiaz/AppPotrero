@@ -3,6 +3,12 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://cctapotrero.com'),
+
+    alternates: {
+  canonical: '/',
+},
+
   title: {
     default: 'CCTA – Cámara de Comercio, Turismo y Afines | Potrero de los Funes',
     template: '%s | CCTA Potrero',
@@ -25,6 +31,40 @@ export const metadata: Metadata = {
     description: 'Comercios, turismo, servicios y lugares para visitar en Potrero de los Funes.',
     images: ['/logo-ccta.jpeg'],
   },
+ icons: {
+  icon: [
+    { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
+    { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+  ],
+},
+twitter: {
+  card: 'summary_large_image',
+  title: 'CCTA – Cámara de Comercio, Turismo y Afines',
+  description:
+    'Comercios, turismo y servicios en Potrero de los Funes.',
+  images: ['/logo-ccta.jpeg'],
+},
+robots: {
+
+    index: true,
+
+    follow: true,
+
+    googleBot: {
+
+        index: true,
+
+        follow: true,
+
+        "max-image-preview": "large",
+
+        "max-video-preview": -1,
+
+        "max-snippet": -1,
+
+    },
+
+},
 }
 
 export const viewport: Viewport = {

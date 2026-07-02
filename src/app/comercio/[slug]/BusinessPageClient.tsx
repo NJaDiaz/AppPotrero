@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import {
   ArrowLeft, Share2, MapPin, Clock, Phone, Globe,
@@ -10,7 +10,6 @@ import { cn, getWhatsAppUrl, getDirectionsUrl, isBusinessOpen } from '@/lib/util
 import { CATEGORY_MAP } from '@/types'
 import type { Business, BusinessMedia } from '@/types'
 import BottomNav from '@/components/shared/BottomNav'
-
 interface Props {
   business: Business
   media: BusinessMedia[]
@@ -25,30 +24,128 @@ const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday'
 export default function BusinessPageClient({ business, media }: Props) {
   const [activeTab, setActiveTab] = useState<'info' | 'galeria'>('info')
   const router = useRouter()
+
   const category = CATEGORY_MAP[business.category]
   const hasSchedule = !!business.schedule
   const isOpen = isBusinessOpen(business.schedule)
 
+  // 🖼 LIGHTBOX STATE
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number>(0)
+
+  const allImages = [
+    ...(business.cover_url ? [business.cover_url] : []),
+    ...media.map(m => m.url)
+  ]
+
+  const openImage = (url: string) => {
+    const index = allImages.findIndex(i => i === url)
+    setSelectedIndex(index)
+    setSelectedImage(url)
+  }
+
+  const touchStartX = useRef<number | null>(null)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextImage()
+      else prevImage()
+    }
+    touchStartX.current = null
+  }
+
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const newIndex = (selectedIndex - 1 + allImages.length) % allImages.length
+    setSelectedIndex(newIndex)
+    setSelectedImage(allImages[newIndex])
+  }
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const newIndex = (selectedIndex + 1) % allImages.length
+    setSelectedIndex(newIndex)
+    setSelectedImage(allImages[newIndex])
+  }
+
   const handleWhatsApp = () => {
     if (business.whatsapp) {
-      window.open(getWhatsAppUrl(business.whatsapp, `Hola ${business.name}! Te contacto desde la app de la CCTA Potrero de los Funes`), '_blank')
+      window.open(
+        getWhatsAppUrl(
+          business.whatsapp,
+          `Hola ${business.name}! Te contacto desde la app de la CCTA Potrero de los Funes`
+        ),
+        '_blank'
+      )
     }
   }
 
-  const handleDirections = () => {
-    window.open(getDirectionsUrl(business.latitude, business.longitude, business.name), '_blank')
+  function ActionButton({
+  icon,
+  label,
+  onClick,
+  color = "gray",
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  color?: "brand" | "green" | "blue" | "pink" | "gray"
+}) {
+  const styles = {
+    brand: "bg-brand-50 text-brand-600 hover:bg-brand-100",
+    green: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+    blue: "bg-blue-50 text-blue-600 hover:bg-blue-100",
+    pink: "bg-pink-50 text-pink-600 hover:bg-pink-100",
+    gray: "bg-gray-50 text-gray-700 hover:bg-gray-100",
   }
 
-  console.log('schedule', business.schedule)
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex flex-col items-center justify-center
+        min-w-[84px] py-3 px-3
+        rounded-2xl
+        transition-all duration-200
+        active:scale-95
+        shadow-sm hover:shadow-md
+        ${styles[color]}
+      `}
+    >
+      <div className="mb-1">{icon}</div>
+      <span className="text-[11px] font-semibold leading-none text-center">
+        {label}
+      </span>
+    </button>
+  )
+}
+
+  const handleDirections = () => {
+    window.open(
+      getDirectionsUrl(business.latitude, business.longitude, business.name),
+      '_blank'
+    )
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({ title: business.name, text: business.short_description || business.name, url: window.location.href })
+      await navigator.share({
+        title: business.name,
+        text: business.short_description || business.name,
+        url: window.location.href
+      })
     } else {
       await navigator.clipboard.writeText(window.location.href)
     }
   }
-
+  
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Cover image */}
@@ -84,67 +181,115 @@ export default function BusinessPageClient({ business, media }: Props) {
         )}
       </div>
 
-      {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3 shadow-sm">
-        <div className="flex items-start gap-3 max-w-lg mx-auto">
-          {business.logo_url && (
-            <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md flex-shrink-0 -mt-8 bg-white">
-              <Image src={business.logo_url} alt={business.name} fill className="object-cover" />
-            </div>
+      <div className="bg-white shadow-sm border-b border-gray-100">
+  <div className="max-w-lg mx-auto px-4 pt-5 pb-4">
+
+    {/* HEADER INFO */}
+    <div className="flex items-start gap-3">
+      
+      {/* LOGO */}
+      {business.logo_url && (
+        <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md flex-shrink-0 -mt-8 bg-white">
+          <Image
+            src={business.logo_url}
+            alt={business.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {/* INFO */}
+      <div className="flex-1 min-w-0">
+        
+        <div className="flex items-center gap-2">
+          <h1 className="font-display font-black text-gray-900 text-xl leading-tight">
+            {business.name}
+          </h1>
+
+          {business.is_verified && (
+            <CheckCircle className="w-5 h-5 text-brand-500 flex-shrink-0" />
           )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-display font-black text-gray-900 text-xl">{business.name}</h1>
-              {business.is_verified && <CheckCircle className="w-5 h-5 text-brand-500 flex-shrink-0" />}
-            </div>
-            <span className="text-sm font-semibold" style={{ color: category?.color }}>{category?.label}</span>
-            {hasSchedule && (
-              <div className="mt-1">
-                <span className={cn('text-sm font-semibold flex items-center gap-1', isOpen ? 'text-emerald-600' : 'text-red-500')}>
-                  <span className="w-2 h-2 rounded-full bg-current" />
-                  {isOpen ? 'Abierto ahora' : 'Cerrado'}
-                </span>
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className="flex gap-2 mt-4 max-w-lg mx-auto overflow-x-auto scrollbar-hide">
-          <button onClick={handleDirections}
-            className="flex flex-col items-center gap-1.5 min-w-[72px] py-3 bg-brand-50 rounded-2xl text-brand-600">
-            <Navigation className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Cómo llegar</span>
-          </button>
-          {business.whatsapp && (
-            <button onClick={handleWhatsApp}
-              className="flex flex-col items-center gap-1.5 min-w-[72px] py-3 bg-emerald-50 rounded-2xl text-emerald-600">
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-[10px] font-bold">WhatsApp</span>
-            </button>
-          )}
-          {business.phone && (
-            <button onClick={() => window.open(`tel:${business.phone}`, '_self')}
-              className="flex flex-col items-center gap-1.5 min-w-[72px] py-3 bg-blue-50 rounded-2xl text-blue-600">
-              <Phone className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Llamar</span>
-            </button>
-          )}
-          {business.instagram && (
-            <button onClick={() => window.open(`https://instagram.com/${business.instagram}`, '_blank')}
-              className="flex flex-col items-center gap-1.5 min-w-[72px] py-3 bg-pink-50 rounded-2xl text-pink-600">
-              <Instagram className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Instagram</span>
-            </button>
-          )}
-          {business.website && (
-            <button onClick={() => window.open(business.website!, '_blank')}
-              className="flex flex-col items-center gap-1.5 min-w-[72px] py-3 bg-gray-50 rounded-2xl text-gray-600">
-              <Globe className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Web</span>
-            </button>
-          )}
-        </div>
+        <span
+          className="text-sm font-semibold"
+          style={{ color: category?.color }}
+        >
+          {category?.label}
+        </span>
+
+        {/* STATUS */}
+        {hasSchedule && (
+          <div className="mt-1">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 text-sm font-semibold",
+                isOpen ? "text-emerald-600" : "text-red-500"
+              )}
+            >
+              <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+              {isOpen ? "Abierto ahora" : "Cerrado"}
+            </span>
+          </div>
+        )}
       </div>
+    </div>
+
+    {/* ACTIONS */}
+    <div className="mt-5">
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+
+        <ActionButton
+          onClick={handleDirections}
+          icon={<Navigation className="w-5 h-5" />}
+          label="Cómo llegar"
+          color="brand"
+        />
+
+        {business.whatsapp && (
+          <ActionButton
+            onClick={handleWhatsApp}
+            icon={<MessageCircle className="w-5 h-5" />}
+            label="WhatsApp"
+            color="green"
+          />
+        )}
+
+        {business.phone && (
+          <ActionButton
+            onClick={() => window.open(`tel:${business.phone}`, "_self")}
+            icon={<Phone className="w-5 h-5" />}
+            label="Llamar"
+            color="blue"
+          />
+        )}
+
+        {business.instagram && (
+          <ActionButton
+            onClick={() =>
+              window.open(`https://instagram.com/${business.instagram}`, "_blank")
+            }
+            icon={<Instagram className="w-5 h-5" />}
+            label="Instagram"
+            color="pink"
+          />
+        )}
+
+        {business.website && (
+          <ActionButton
+            onClick={() => window.open(business.website!, "_blank")}
+            icon={<Globe className="w-5 h-5" />}
+            label="Web"
+            color="gray"
+          />
+        )}
+
+      </div>
+    </div>
+
+  </div>
+</div>
 
       <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
         <div className="flex max-w-lg mx-auto">
@@ -197,38 +342,60 @@ export default function BusinessPageClient({ business, media }: Props) {
             </div>
 
             {hasSchedule && (
-              <div className="bg-white rounded-2xl p-4">
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-400" /> Horarios
-                </h3>
-                <div className="space-y-2">
-                  {DAY_ORDER.map(day => {
-  const s = (business.schedule as any)?.[day]
-  if (!s) return null
+  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <Clock className="w-4 h-4 text-gray-400" />
+      Horarios
+    </h3>
 
-  return (
-    <div key={day} className="flex items-center justify-between text-sm">
-      <span className="text-gray-600 font-medium">
-        {DAY_LABELS[day]}
-      </span>
+    <div className="space-y-3">
+      {DAY_ORDER.map(day => {
+        const s = (business.schedule as any)?.[day]
+        if (!s) return null
 
-  {s.closed ? (
-  <span className="text-red-500 font-semibold">
-    Cerrado
-  </span>
-) : (
-  <span className="text-gray-800 font-semibold">
-    {s.shifts?.map((shift: any) =>
-      `${shift.open} - ${shift.close}`
-    ).join(' | ')} hs
-  </span>
-)}
+        const isClosed = s.closed
+
+        return (
+          <div
+            key={day}
+            className="flex items-start justify-between rounded-xl px-3 py-2 bg-gray-50 hover:bg-gray-100 transition"
+          >
+            {/* Día */}
+            <div className="w-28">
+              <span className="text-sm font-semibold text-gray-700">
+                {DAY_LABELS[day]}
+              </span>
+            </div>
+
+            {/* Horarios */}
+            <div className="flex-1 flex flex-wrap gap-2 justify-end">
+              {isClosed ? (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-600">
+                  Cerrado
+                </span>
+              ) : (
+                <>
+                  {s.shifts?.map((shift: any, idx: number) => (
+                    <span
+                      key={idx}
+                      className="text-xs font-medium px-2 py-1 rounded-full bg-white border border-gray-200 text-gray-700 shadow-sm"
+                    >
+                      {shift.open} – {shift.close}
+                    </span>
+                  ))}
+
+                  <span className="text-xs text-gray-400 ml-1 self-center">
+                    hs
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
-  )
-})}
-                </div>
-              </div>
-            )}
+  </div>
+)}
 
             
 
@@ -252,15 +419,73 @@ export default function BusinessPageClient({ business, media }: Props) {
             ) : (
               <div className="grid grid-cols-3 gap-1">
                 {media.map((item, i) => (
-                  <div key={item.id} className={cn('relative bg-gray-100 overflow-hidden rounded-xl', i === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square')}>
-                    <Image src={item.url} alt={item.caption || ''} fill className="object-cover" />
-                  </div>
+                  <div
+  key={item.id}
+  className={cn(
+    'relative bg-gray-100 overflow-hidden rounded-xl cursor-zoom-in',
+    i === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'
+  )}
+  onClick={() => openImage(item.url)}
+>
+  <Image src={item.url} alt={item.caption || ''} fill className="object-cover" />
+</div>
                 ))}
               </div>
             )}
           </div>
         )}
       </div>
+
+      {selectedImage && (
+  <div
+    className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center"
+    onClick={() => setSelectedImage(null)}
+  >
+    <div
+      className="relative w-full h-full flex items-center justify-center"
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      <Image
+        src={selectedImage}
+        alt="preview"
+        fill
+        className="object-contain select-none"
+        priority
+      />
+    </div>
+
+    <button
+      className="absolute top-4 right-4 text-white bg-white/10 px-3 py-1 rounded-lg"
+      onClick={() => setSelectedImage(null)}
+    >
+      Cerrar
+    </button>
+
+    {allImages.length > 1 && (
+      <button
+        onClick={prevImage}
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-white w-10 h-10 bg-white/10 rounded-full"
+      >
+        ‹
+      </button>
+    )}
+
+    {allImages.length > 1 && (
+      <button
+        onClick={nextImage}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-white w-10 h-10 bg-white/10 rounded-full"
+      >
+        ›
+      </button>
+    )}
+
+    <div className="absolute bottom-5 text-white text-xs bg-white/10 px-3 py-1 rounded-full">
+      {selectedIndex + 1} / {allImages.length}
+    </div>
+  </div>
+)}
 
       <BottomNav />
     </div>

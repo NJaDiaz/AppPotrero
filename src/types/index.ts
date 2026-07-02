@@ -149,6 +149,7 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES: CategoryInfo[] = [
+    { key: 'alojamiento',     label: 'Alojamiento',     icon: '🏨', color: '#7c3aed', bgColor: '#f5f3ff' },
   { key: 'gastronomia',     label: 'Gastronomía',     icon: '🍽️', color: '#f97316', bgColor: '#fff7ed' },
   { key: 'turismo',         label: 'Turismo',         icon: '📸', color: '#059669', bgColor: '#ecfdf5' },
   { key: 'salud',           label: 'Salud',           icon: '💙', color: '#2563eb', bgColor: '#eff6ff' },
@@ -156,7 +157,6 @@ export const CATEGORIES: CategoryInfo[] = [
   { key: 'servicios',       label: 'Servicios',       icon: '🔧', color: '#ea580c', bgColor: '#fff7ed' },
   { key: 'deportes',        label: 'Deportes',        icon: '🏋️', color: '#0891b2', bgColor: '#ecfeff' },
   { key: 'entretenimiento', label: 'Entretenimiento', icon: '🎭', color: '#be185d', bgColor: '#fdf2f8' },
-  { key: 'alojamiento',     label: 'Alojamiento',     icon: '🏨', color: '#7c3aed', bgColor: '#f5f3ff' },
 ]
 
 export const CATEGORY_MAP: Record<Category, CategoryInfo> = CATEGORIES.reduce(

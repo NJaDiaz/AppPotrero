@@ -13,6 +13,17 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return {
     title: business.name,
     description: business.short_description || `Visitá ${business.name} en Potrero de los Funes`,
+    alternates: {
+    canonical: `/comercio/${params.slug}`,
+},
+twitter: {
+    card: 'summary_large_image',
+    title: business.name,
+    description: business.short_description ?? '',
+    images: business.cover_url
+        ? [business.cover_url]
+        : ['/logo-ccta.jpeg'],
+},
     openGraph: { title: business.name, description: business.short_description || '', images: business.cover_url ? [business.cover_url] : [] },
   }
 }

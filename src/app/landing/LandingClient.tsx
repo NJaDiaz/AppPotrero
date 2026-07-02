@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  MapPin, Phone, MessageCircle, Tag, CalendarDays,
+  Heart, MapPin, Phone, MessageCircle, Tag, CalendarDays,
   Map, ChevronRight, Menu, X, ArrowRight, CheckCircle,
   Store, Clock, Megaphone, BarChart3, Smartphone, Users,
   Award, ShieldCheck
@@ -25,12 +26,18 @@ export default function LandingClient({ businesses, events, totalBusinesses, pla
   const [menuOpen, setMenuOpen]         = useState(false)
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all')
   const [scrolled, setScrolled]         = useState(false)
+  const [visibleCount, setVisibleCount] = useState(8)
+  const router = useRouter()
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', fn, { passive: true })
     return () => window.removeEventListener('scroll', fn)
   }, [])
+
+  useEffect(() => {
+  setVisibleCount(8)
+}, [activeCategory])
 
   const filtered = activeCategory === 'all'
     ? businesses
@@ -291,36 +298,49 @@ calidad a sus miembros.
             <p className="text-gray-500 text-lg">Todos los negocios de Potrero de los Funes</p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-  <button
-    onClick={() => setActiveCategory('all')}
-    className={`px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-      activeCategory === 'all'
-        ? 'bg-brand-500 text-white shadow-lg scale-105'
-        : 'bg-white border border-gray-200 text-gray-700 hover:shadow-md'
-    }`}
-  >
-    Todos
-  </button>
+          <div className="mb-10">
+  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
 
-  {CATEGORIES.map(cat => (
     <button
-      key={cat.key}
-      onClick={() => setActiveCategory(cat.key)}
-      className={`px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-        activeCategory === cat.key
-          ? 'text-white shadow-lg scale-105'
+      onClick={() => setActiveCategory('all')}
+      className={`flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 ${
+        activeCategory === 'all'
+          ? 'bg-brand-500 text-white shadow-xl'
           : 'bg-white border border-gray-200 text-gray-700 hover:shadow-md'
       }`}
-      style={
-        activeCategory === cat.key
-          ? { backgroundColor: cat.color }
-          : {}
-      }
     >
-      {cat.label}
+      <Store className="w-4 h-4" />
+      <span className="font-semibold text-sm">
+        Todos
+      </span>
     </button>
-  ))}
+
+    {CATEGORIES.map(cat => (
+      <button
+        key={cat.key}
+        onClick={() => setActiveCategory(cat.key)}
+        className={`flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 ${
+          activeCategory === cat.key
+            ? 'text-white shadow-xl'
+            : 'bg-white border border-gray-200 text-gray-700 hover:shadow-md'
+        }`}
+        style={
+          activeCategory === cat.key
+            ? { backgroundColor: cat.color }
+            : {}
+        }
+      >
+        <span className="text-lg">
+          {cat.icon}
+        </span>
+
+        <span className="font-semibold text-sm whitespace-nowrap">
+          {cat.label}
+        </span>
+      </button>
+    ))}
+
+  </div>
 </div>
 
           {filtered.length === 0 ? (
@@ -330,12 +350,14 @@ calidad a sus miembros.
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map(biz => {
-                const cat = CATEGORY_MAP[biz.category]
+              {filtered.slice(0, visibleCount).map(biz => {                const cat = CATEGORY_MAP[biz.category]
                 const open = isBusinessOpen(biz.schedule)
                 return (
-                  <Link key={biz.id} href={`/comercio/${biz.slug}`}>
-                    <div className="bg-white rounded-2xl overflow-hidden shadow-card card-hover border border-gray-100 h-full">
+<div
+  key={biz.id}
+  onClick={() => router.push(`/comercio/${biz.slug}`)}
+  className="bg-white rounded-2xl overflow-hidden shadow-card card-hover border border-gray-100 h-full cursor-pointer"
+>
                       <div className="relative h-40">
                         {biz.cover_url
                           ? <Image src={biz.cover_url} alt={biz.name} fill className="object-cover" />
@@ -376,19 +398,67 @@ calidad a sus miembros.
                           </span>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
           )}
 
-          <div className="text-center mt-10">
-            <Link href="/mapa"
-              className="inline-flex items-center gap-2 bg-brand-500 text-white font-bold px-8 py-4 rounded-2xl shadow-brand text-lg hover:bg-brand-600 transition-colors">
-              <Map className="w-5 h-5" /> Ver en el mapa interactivo
-            </Link>
-          </div>
+<div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12">
+
+  {visibleCount < filtered.length && (
+    <button
+      onClick={() => setVisibleCount(prev => prev + 8)}
+      className="px-7 py-3 rounded-2xl bg-white border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50 hover:shadow-lg transition-all"
+    >
+      Cargar más
+    </button>
+  )}
+
+  <Link
+    href="/buscar"
+    className="px-7 py-3 rounded-2xl bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-brand"
+  >
+    Ver todos los comercios →
+  </Link>
+
+</div>
+          <Link href="/mapa" className="block">
+  <div className="relative my-4 overflow-hidden rounded-[30px] bg-gradient-to-br from-brand-500 via-brand-500 to-brand-400 p-6 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-brand">
+
+    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+    <div className="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-white/5" />
+
+    <div className="relative flex items-center gap-5">
+
+      <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm">
+
+        <Map className="h-8 w-8 text-white" />
+
+      </div>
+
+      <div className="flex-1">
+
+        <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
+          MAPA INTERACTIVO
+        </p>
+
+        <h3 className="mt-1 font-display text-2xl font-black text-white">
+          Explorá Potrero
+        </h3>
+
+        <p className="mt-2 text-sm leading-relaxed text-white/80">
+          Encontrá comercios, gastronomía, alojamientos y lugares cerca tuyo.
+        </p>
+
+      </div>
+
+      <ChevronRight className="h-7 w-7 text-white/80" />
+
+    </div>
+
+  </div>
+</Link>
         </div>
       </section>
 
@@ -486,7 +556,7 @@ calidad a sus miembros.
             <p className="text-gray-500 text-sm mb-6">
               Escribinos por WhatsApp para conocer los requisitos de adhesión y cuotas de membresía.
             </p>
-            <Link href="https://wa.me/5492664000000?text=Hola!%20Quiero%20información%20para%20adherirme%20a%20la%20CCTA%20Potrero%20de%20los%20Funes"
+            <Link href="https://wa.me/5492665069204?text=Hola!%20Quiero%20información%20para%20adherirme%20a%20la%20CCTA%20Potrero%20de%20los%20Funes"
               target="_blank"
               className="inline-flex items-center justify-center gap-2 bg-emerald-500 text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-emerald-600 transition-colors w-full">
               <MessageCircle className="w-5 h-5" />
@@ -560,12 +630,24 @@ calidad a sus miembros.
                   <MapPin className="w-4 h-4 text-brand-500 flex-shrink-0" />
                   Potrero de los Funes, San Luis
                 </div>
+                <div className="flex items-center gap-2 text-gray-700 text-sm">
+                  <Phone className="w-4 h-4 text-brand-500 flex-shrink-0" />
+                  <a href="tel:+5492665069204" className="hover:text-brand-500 transition-colors">+54 9 2665 069204</a>
+                </div>
               </div>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-black text-sm">© 2026 CCTA Potrero de los Funes. Todos los derechos reservados.</p>
-            <p className="text-black text-xs">Hecho con ❤️ para Potrero de los Funes 🇦🇷</p>
+            <p className="text-black text-xs flex items-center gap-1">
+              Hecho con <Heart className="w-3 h-3 text-black" /> por
+            <a
+               href="https://www.velocitstudio.com"
+                className="hover:text-brand-500 ml-1"
+            >
+              Velocit Studio
+            </a>
+            </p>
           </div>
         </div>
       </footer>

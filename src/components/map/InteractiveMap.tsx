@@ -129,7 +129,6 @@ export default function InteractiveMap({
       attributionControl: false,
     })
 
-    // CartoDB Voyager — limpio y moderno
     L.tileLayer(
       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
       { attribution: '© OpenStreetMap © CartoDB', maxZoom: 19 }

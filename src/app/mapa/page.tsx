@@ -146,7 +146,7 @@ export default function MapPage() {
         )}
       </div>
 
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 -z-50 relative overflow-hidden">
         <InteractiveMap
           businesses={filtered}
           selectedId={selectedBusiness?.id}
@@ -155,7 +155,7 @@ export default function MapPage() {
         />
 
         {!loading && (
-          <div className="absolute bottom-4 left-3 z-[400]">
+          <div className="absolute top-2 left-3 z-[400]">
             <div className="bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-card text-xs font-bold text-gray-700 border border-gray-100">
               {filtered.length} {filtered.length === 1 ? 'comercio' : 'comercios'}
             </div>
@@ -165,7 +165,7 @@ export default function MapPage() {
         {selectedBusiness && (
           <div
             ref={sheetRef}
-            className="absolute bottom-0 left-0 right-0 z-[600] bg-white rounded-t-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.16)] max-h-[62vh] overflow-y-auto animate-slide-up"
+            className="absolute bottom-28 left-0 right-0 z-[600] bg-white rounded-t-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.16)] max-h-[62vh] overflow-y-auto animate-slide-up"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
